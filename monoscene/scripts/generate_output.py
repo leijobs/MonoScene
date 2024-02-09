@@ -15,7 +15,12 @@ import pickle
 
 @hydra.main(config_name="../config/monoscene.yaml")
 def main(config: DictConfig):
-    torch.set_grad_enabled(False)
+    """
+    1.根据数据集设置输入参数
+    2.加载模型并进行预测
+    3.数据结果转pkl保存
+    """
+    torch.set_grad_enabled(False)  # Note： 关闭梯度计算（因为不是training）
 
     # Setup dataloader
     if config.dataset == "kitti" or config.dataset == "kitti_360":
@@ -24,7 +29,7 @@ def main(config: DictConfig):
         full_scene_size = (256, 256, 32)
 
         if config.dataset == "kitti":
-            data_module = KittiDataModule(
+            data_module = KittiDataModule(  # Note： kitti数据加载，视锥size，batch size， 线程数
                 root=config.kitti_root,
                 preprocess_root=config.kitti_preprocess_root,
                 frustum_size=config.frustum_size,
@@ -73,7 +78,7 @@ def main(config: DictConfig):
             get_original_cwd(), "trained_models", "monoscene_kitti.ckpt"
         )
 
-    model = MonoScene.load_from_checkpoint(
+    model = MonoScene.load_from_checkpoint(  # Note： 加载model
         model_path,
         feature=feature,
         project_scale=project_scale,
@@ -88,14 +93,14 @@ def main(config: DictConfig):
     output_path = os.path.join(config.output_path, config.dataset)
     with torch.no_grad():
         for batch in tqdm(data_loader):
-            batch["img"] = batch["img"].cuda()
-            pred = model(batch)
-            y_pred = torch.softmax(pred["ssc_logit"], dim=1).detach().cpu().numpy()
-            y_pred = np.argmax(y_pred, axis=1)
+            batch["img"] = batch["img"].cuda()   # Note： 输入图像转cuda
+            pred = model(batch)   # Note： 模型预测
+            y_pred = torch.softmax(pred["ssc_logit"], dim=1).detach().cpu().numpy()   # Note： 预测结果->softmax->cpu->numpy
+            y_pred = np.argmax(y_pred, axis=1)   # Note： 获得最大值的index
             for i in range(config.batch_size):
                 out_dict = {"y_pred": y_pred[i].astype(np.uint16)}
                 if "target" in batch:
-                    out_dict["target"] = (
+                    out_dict["target"] = (  # Note： batch输入数据保存
                         batch["target"][i].detach().cpu().numpy().astype(np.uint16)
                     )
 
@@ -119,7 +124,7 @@ def main(config: DictConfig):
 
                 os.makedirs(write_path, exist_ok=True)
                 with open(filepath, "wb") as handle:
-                    pickle.dump(out_dict, handle)
+                    pickle.dump(out_dict, handle)  # Note： pkl数据写入
                     print("wrote to", filepath)
 
 

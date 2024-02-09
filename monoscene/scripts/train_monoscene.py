@@ -24,6 +24,11 @@ hydra.output_subdir = None
 
 @hydra.main(config_name="../config/monoscene.yaml")
 def main(config: DictConfig):
+    """
+    1.读取config输入数据，初始化参数
+    2.
+    3.
+    """
     exp_name = config.exp_prefix
     exp_name += "_{}_{}".format(config.dataset, config.run)
     exp_name += "_FrusSize_{}".format(config.frustum_size)
@@ -138,9 +143,9 @@ def main(config: DictConfig):
     model_path = os.path.join(logdir, exp_name, "checkpoints/last.ckpt")
     if os.path.isfile(model_path):
         # Continue training from last.ckpt
-        trainer = Trainer(
+        trainer = Trainer(  # Note： 模型训练
             callbacks=checkpoint_callbacks,
-            resume_from_checkpoint=model_path,
+            resume_from_checkpoint=model_path,  # Note： resume form 已有模型
             sync_batchnorm=True,
             deterministic=False,
             max_epochs=max_epochs,

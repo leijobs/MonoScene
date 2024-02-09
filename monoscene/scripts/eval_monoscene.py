@@ -11,14 +11,18 @@ from hydra.utils import get_original_cwd
 
 @hydra.main(config_name="../config/monoscene.yaml")
 def main(config: DictConfig):
-    torch.set_grad_enabled(False)
+    """
+    1.
+    2.
+    """
+    torch.set_grad_enabled(False)  #Note: eval模式，不backfoward，关闭求导
     if config.dataset == "kitti":
         config.batch_size = 1
         n_classes = 20
         feature = 64
         project_scale = 2
         full_scene_size = (256, 256, 32)
-        data_module = KittiDataModule(
+        data_module = KittiDataModule(  #Note: 初始化输入数据
             root=config.kitti_root,
             preprocess_root=config.kitti_preprocess_root,
             frustum_size=config.frustum_size,
@@ -41,7 +45,7 @@ def main(config: DictConfig):
             num_workers=int(config.num_workers_per_gpu * config.n_gpus),
         )
 
-    trainer = Trainer(
+    trainer = Trainer(  #Note: 开始eval
         sync_batchnorm=True, deterministic=True, gpus=config.n_gpus, accelerator="ddp"
     )
 
@@ -54,7 +58,7 @@ def main(config: DictConfig):
             get_original_cwd(), "trained_models", "monoscene_kitti.ckpt"
         )
 
-    model = MonoScene.load_from_checkpoint(
+    model = MonoScene.load_from_checkpoint(  #Note: 加载模型
         model_path,
         feature=feature,
         project_scale=project_scale,
@@ -64,7 +68,7 @@ def main(config: DictConfig):
     model.eval()
     data_module.setup()
     val_dataloader = data_module.val_dataloader()
-    trainer.test(model, test_dataloaders=val_dataloader)
+    trainer.test(model, test_dataloaders=val_dataloader)  #Note: 在val数据中验证模型
 
 
 if __name__ == "__main__":

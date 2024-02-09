@@ -9,6 +9,9 @@ from torchvision import transforms
 
 
 class Kitti360Dataset(Dataset):
+    """
+    1.kitti数据集的基本信息和读取
+    """
     def __init__(self, root, sequences, n_scans):
         """
         Paramters
@@ -51,6 +54,9 @@ class Kitti360Dataset(Dataset):
         return len(self.scans)
 
     def get_cam_k(self):
+        """
+        1. 相机内参矩阵
+        """
         cam_k = np.array(
             [
                 552.554261,
@@ -70,6 +76,9 @@ class Kitti360Dataset(Dataset):
         return cam_k[:3, :3]
 
     def get_velo2cam(self):
+        """
+        1. 激光雷达到相机的RT矩阵
+        """
         cam2velo = np.array(
             [
                 0.04307104361,
@@ -92,6 +101,9 @@ class Kitti360Dataset(Dataset):
         return np.linalg.inv(cam2velo)
 
     def __getitem__(self, index):
+        """
+        1.完成数据读取和输出
+        """
         data = {"T_velo_2_cam": self.T_velo_2_cam, "cam_k": self.cam_k}
         scan = self.scans[index]
         img_path = scan["img_path"]
